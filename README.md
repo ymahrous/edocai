@@ -2,83 +2,225 @@
 
 # edocAI
 
-### Enterprise Asynchronous Document Intelligence
+**Enterprise Asynchronous Document Intelligence**
 
-*Transform unstructured invoices and receipts into structured JSON using AI. Built with a focus on asynchronous processing, user isolation, and enterprise-grade cloud architecture.*
+*Transform unstructured invoices and receipts into structured JSON — at scale, without timeouts.*
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)](https://python.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Celery](https://img.shields.io/badge/Celery-5.3-green?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
-[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-1.5-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
-[![Railway](https://img.shields.io/badge/Railway-Cloud-0B1141?logo=railway&logoColor=white)](https://railway.app/)
+[![Gemini](https://img.shields.io/badge/Google%20Gemini-1.5%20Flash-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 </div>
 
 ---
 
-## Architecture & System Design
+## The Problem
 
-This project was designed to solve a specific ML Engineering problem: **API Gateway Timeouts**. If an AI model takes 10 seconds to process a document, standard web servers will drop the connection. 
+Standard web APIs have a hard limit: if your server doesn't respond within ~30 seconds, the connection is dropped. AI document extraction can easily take 10–30 seconds per file. Naive implementations fail under real-world load.
 
-edocAI solves this using the **Producer-Consumer pattern** via a message queue:
+edocAI solves this with a **an async architecture** — the API responds in ~100ms, and a background worker does the heavy lifting independently.
 
-1. **FastAPI (Producer):** Receives the file, saves it to object storage, saves a `PENDING` record to the database, pushes a message to Redis, and returns `202 Accepted` to the client in ~100ms.
-2. **Upstash Redis:** Acts as the message broker holding the job ticket.
-3. **Celery Worker (Consumer):** Pulls the message from Redis, downloads the file, runs the AI inference pipeline, and updates the database to `COMPLETED`.
+---
+
+## How It Works
+
+```
+User uploads file
+       │
+       ▼
+┌──────────────┐    saves file     ┌─────────────────┐
+│   FastAPI    │ ─────────────────▶│ Supabase Storage│
+│  (Producer)  │                   └─────────────────┘
+│              │    writes PENDING ┌─────────────────┐
+│              │ ─────────────────▶│  Neon Postgres  │
+│              │                   └─────────────────┘
+│              │    pushes job     ┌─────────────────┐
+└──────────────┘ ─────────────────▶│  Upstash Redis  │
+                                   └────────┬────────┘
+                                            │ pulls job
+                                            ▼
+                                   ┌─────────────────┐
+                                   │  Celery Worker  │
+                                   │  (Consumer)     │
+                                   │                 │
+                                   │  1. Download    │
+                                   │  2. AI Inference│──▶ Gemini 1.5 Flash
+                                   │  3. COMPLETED   │       │ (rate limited?)
+                                   └─────────────────┘       ▼
+                                                       PyMuPDF + LLM fallback
+```
 
 ### AI Pipeline & Fallback Router
-To ensure maximum reliability on a free tier, the worker uses a fallback router:
-*   **Attempt 1:** Send the image to Google Gemini 1.5 Flash (Vision Model).
-*   **Attempt 2 (If rate-limited):** Route to a local PyMuPDF text extractor + LLM fallback. 
-*   *All extracted data is returned as strictly typed JSON.*
 
-### Security & Multi-Tenancy
-*   **Authentication:** Stateless JWTs (JSON Web Tokens) with Bearer auth.
-*   **Isolation:** Strict database-level Row-Level Security. Users can only `SELECT` documents where `owner_id` matches their session token.
-*   **Passwords:** Hashed using the raw Bcrypt algorithm (avoiding `passlib` OS-level bugs).
+The worker uses a two-stage fallback to maximize uptime on free-tier rate limits:
+
+| Attempt | Strategy | Trigger |
+|---|---|---|
+| **1** | Google Gemini 1.5 Flash (vision) | Always tried first |
+| **2** | PyMuPDF text extraction + LLM | Only on rate-limit error |
+
+All output is returned as **strictly typed JSON**.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Frontend** | Next.js 16, Tailwind CSS | SaaS UI, Dynamic Theming, SSR |
-| **Backend API** | FastAPI | RESTful endpoints, Automatic OpenAPI docs |
-| **Database** | Neon (Serverless Postgres) | Managed relational data |
-| **Message Queue** | Upstash Redis | Serverless Celery message broker |
-| **Object Storage** | Supabase Storage | Free S3-compatible file storage |
+|---|---|---|
+| **Frontend** | Next.js 16, React 19, Tailwind CSS v4 | SaaS UI, SSR, dynamic theming |
+| **UI Components** | shadcn/ui, Radix UI | Accessible component primitives |
+| **Backend API** | FastAPI (Python 3.11) | RESTful endpoints, OpenAPI docs |
+| **Task Queue** | Celery 5.3 | Distributed async workers |
+| **Message Broker** | Upstash Redis | Serverless job queue |
+| **Database** | Neon (Serverless Postgres) | Managed relational storage |
+| **Object Storage** | Supabase Storage | S3-compatible file store |
 | **AI Inference** | Google Gemini 1.5 Flash | Multimodal document extraction |
-| **Background Workers**| Celery | Distributed task queue |
-| **Hosting** | Railway (Backend), Vercel (Frontend) | $0.00 Cloud Deployment |
+| **Auth** | JWT (Bearer tokens) + bcrypt | Stateless authentication |
+| **Frontend Host** | Vercel | Global CDN, zero-config deploy |
+| **Backend Host** | Railway | Docker-based, auto-deploy on push |
 
 ---
 
-## Cloud Deployment
+## Security Model
 
-This project is configured for zero-downtime deployment on free-tier cloud services.
+edocAI is built with **multi-tenant isolation** as a first-class concern, not an afterthought.
 
-1.  **Database & Storage:** Provisioned on Neon and Supabase.
-2.  **Backend & Worker:** Push to GitHub. Connect GitHub to Railway. Railway automatically builds the `web` (FastAPI) and `worker` (Celery) based on the `Procfile`.
-3.  **Frontend:** Push to GitHub. Connect to Vercel. Update environment variables to point to the Railway API URL.
-4.  **CORS:** Ensure the Railway API URL is added to the `allow_origins` list in `main.py`.
+**Authentication** — Stateless JWTs with Bearer auth. No sessions, no cookies. Every request is independently verified.
 
----
+**Data Isolation** — Row-Level Security (RLS) is enforced at the PostgreSQL level via `owner_id` foreign keys. Even if a bug exists in the Python logic, users are structurally prevented from accessing each other's documents.
 
-## Key Decisions
-
-1.  **Why Redis/Celery instead of Threading?** 
-    Python's GIL makes true multithreading difficult for CPU/AI bound tasks. Offloading to a separate Celery worker process ensures the API remains responsive and can scale horizontally.
-2.  **Why raw `bcrypt` instead of `passlib`?**
-    `passlib` has known incompatibilities with certain OS environments (specifically macOS DNS/Fork behaviors). Using the raw `bcrypt` library reduces dependency bloat and eliminates these edge cases.
-3.  **Why Google Gemini Interactions API?**
-    Standard REST vision APIs require managing base64 encoding, MIME types, and complex JSON payloads. The new Gemini Interactions API abstracts this away, resulting in significantly cleaner Python code.
-4.  **Why User Isolation at the DB level?**
-    Rather than filtering documents in Python memory, we use `owner_id` foreign keys in PostgreSQL. This guarantees data isolation even if a bug occurs in the Python logic.
+**Password Hashing** — Uses raw `bcrypt` (not `passlib`), which avoids known incompatibilities with some fork/DNS behavior in production environments.
 
 ---
 
-## 📄 License
+## Project Structure
 
-This project is open source and available under the [MIT License](LICENSE).
+```
+edocai/
+├── app/                    # Next.js App Router
+│   ├── (auth)/             # Login / signup routes
+│   ├── dashboard/          # Authenticated SaaS UI
+│   └── api/                # Next.js API route handlers
+├── components/
+│   └── ui/                 # shadcn/ui component library
+├── lib/                    # Shared utilities, API client
+├── public/                 # Static assets
+├── next.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+└── package.json
+```
+
+> **Note:** The FastAPI backend and Celery worker live in a separate repository, deployed independently to Railway.
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 20+
+- A running instance of the [edocAI backend API](https://github.com/ymahrous/edocai)
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/ymahrous/edocai.git
+cd edocai
+
+# Install dependencies
+npm install
+
+# Configure environment variables
+cp .env.example .env.local
+```
+
+Edit `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000   # Your FastAPI backend URL
+```
+
+```bash
+# Start the development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Deployment
+
+The full stack deploys to free-tier cloud services with zero configuration.
+
+### Backend (Railway)
+
+1. Connect your GitHub repo to [Railway](https://railway.app).
+2. Railway auto-detects the `Procfile` and deploys two services:
+   - `web` — the FastAPI server
+   - `worker` — the Celery consumer
+3. Add environment variables (API keys, DB URLs, Redis URL) in the Railway dashboard.
+
+### Frontend (Vercel)
+
+1. Connect the repo to [Vercel](https://vercel.com).
+2. Set `NEXT_PUBLIC_API_URL` to your Railway API URL.
+3. Deploy. Vercel handles everything else.
+
+### Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | ✅ | Base URL of the FastAPI backend |
+
+---
+
+## Key Engineering Decisions
+
+**Why Celery + Redis instead of threading?**
+Python's GIL prevents true parallelism for CPU/IO-bound tasks. Offloading AI inference to a separate Celery process keeps the API non-blocking and allows horizontal scaling of workers independently of the API layer.
+
+**Why raw `bcrypt` instead of `passlib`?**
+`passlib` has documented incompatibilities with macOS and certain Linux fork behaviors. The raw `bcrypt` library is lighter, more predictable, and eliminates a class of production surprises.
+
+**Why DB-level RLS instead of application-level filtering?**
+Filtering in Python is only as reliable as the code. PostgreSQL RLS is enforced by the database engine itself — it's a hard constraint that survives any application-layer bug.
+
+**Why the Gemini Interactions API?**
+The standard REST vision API requires manual base64 encoding, MIME type management, and verbose JSON construction. The Interactions API abstracts this cleanly, keeping the worker code readable and maintainable.
+
+---
+
+## Contributing
+
+Contributions are welcome. Please open an issue first to discuss what you'd like to change.
+
+```bash
+# Run linting
+npm run lint
+
+# Run type checking
+npx tsc --noEmit
+```
+
+---
+
+## License
+
+[MIT LICENSE](./LICENSE)
+
+---
+
+<div align="center">
+
+Built with Next.js · FastAPI · Celery · Google Gemini · Railway · Vercel
+
+**[Live Demo →](https://edocai.vercel.app)**
+
+</div>
