@@ -1,4 +1,4 @@
-const API_URL = "https://web-production-569818.up.railway.app/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface Document {
   id: string;
@@ -18,27 +18,79 @@ export interface Extraction {
   confidence_score: number;
 }
 
+// --- AUTH FUNCTIONS ---
+export async function login(username: string, password: string) {
+  const res = await fetch(`${API_URL}/auth/login`, {
+    method: "POST",
+    mode: "cors", // EXPLICITLY tell browser this is a cross-origin request
+    headers: { 
+      "Content-Type": "application/json",
+      "Accept": "application/json" 
+    },
+    body: JSON.stringify({ username, password }),
+  });
+  
+  if (!res.ok) {
+    // Try to read the error message from the backend if possible
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Invalid credentials");
+  }
+  
+  const data = await res.json();
+  localStorage.setItem("token", data.access_token);
+  return data;
+}
+
+export function logout() {
+  localStorage.removeItem("token");
+}
+
+// --- PROTECTED FETCH WRAPPER ---
+async function authFetch(url: string, options: RequestInit = {}) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  if (!token) throw new Error("Not authenticated");
+  
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+  
+  if (res.status === 401) {
+    if (typeof window !== "undefined") localStorage.removeItem("token");
+    throw new Error("Session expired");
+  }
+  
+  return res;
+}
+
+// --- APP FUNCTIONS ---
 export async function uploadDocument(file: File): Promise<Document> {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Not authenticated");
+
   const formData = new FormData();
   formData.append("file", file);
 
   const res = await fetch(`${API_URL}/upload/`, {
     method: "POST",
+    headers: { "Authorization": `Bearer ${token}` },
     body: formData,
   });
-
   if (!res.ok) throw new Error("Upload failed");
   return res.json();
 }
 
 export async function getDocuments(): Promise<Document[]> {
-  const res = await fetch(`${API_URL}/documents/`);
+  const res = await authFetch(`${API_URL}/documents/`);
   if (!res.ok) throw new Error("Failed to fetch documents");
   return res.json();
 }
 
 export async function getExtraction(documentId: string): Promise<Extraction> {
-  const res = await fetch(`${API_URL}/extraction/${documentId}`);
+  const res = await authFetch(`${API_URL}/extraction/${documentId}`);
   if (!res.ok) throw new Error("Extraction not ready");
   return res.json();
 }
