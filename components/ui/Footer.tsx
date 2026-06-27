@@ -50,8 +50,16 @@ export default function Footer() {
           <div>
             <h4 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Legal</h4>
             <ul className="space-y-3">
-              <li><span className={`text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`}>Privacy Policy</span></li>
-              <li><span className={`text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`}>Terms of Service</span></li>
+              <li>
+                <Link href="/terms" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>
+                  Privacy Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
