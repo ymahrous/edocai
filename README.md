@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# edocAI
 
-First, run the development server:
+### Enterprise Asynchronous Document Intelligence
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+*Transform unstructured invoices and receipts into structured JSON using AI. Built with a focus on asynchronous processing, user isolation, and enterprise-grade cloud architecture.*
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)](https://python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Celery](https://img.shields.io/badge/Celery-5.3-green?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-1.5-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
+[![Railway](https://img.shields.io/badge/Railway-Cloud-0B1141?logo=railway&logoColor=white)](https://railway.app/)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+</div>
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🎯 Architecture & System Design
 
-To learn more about Next.js, take a look at the following resources:
+This project was designed to solve a specific ML Engineering problem: **API Gateway Timeouts**. If an AI model takes 10 seconds to process a document, standard web servers will drop the connection. 
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+edocAI solves this using the **Producer-Consumer pattern** via a message queue:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **FastAPI (Producer):** Receives the file, saves it to object storage, saves a `PENDING` record to the database, pushes a message to Redis, and returns `202 Accepted` to the client in ~100ms.
+2. **Upstash Redis:** Acts as the message broker holding the job ticket.
+3. **Celery Worker (Consumer):** Pulls the message from Redis, downloads the file, runs the AI inference pipeline, and updates the database to `COMPLETED`.
 
-## Deploy on Vercel
+### 🧠 AI Pipeline & Fallback Router
+To ensure maximum reliability on a free tier, the worker uses a fallback router:
+*   **Attempt 1:** Send the image to Google Gemini 1.5 Flash (Vision Model).
+*   **Attempt 2 (If rate-limited):** Route to a local PyMuPDF text extractor + LLM fallback. 
+*   *All extracted data is returned as strictly typed JSON.*
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 🔐 Security & Multi-Tenancy
+*   **Authentication:** Stateless JWTs (JSON Web Tokens) with Bearer auth.
+*   **Isolation:** Strict database-level Row-Level Security. Users can only `SELECT` documents where `owner_id` matches their session token.
+*   **Passwords:** Hashed using the raw Bcrypt algorithm (avoiding `passlib` OS-level bugs).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Frontend** | Next.js 16, Tailwind CSS | SaaS UI, Dynamic Theming, SSR |
+| **Backend API** | FastAPI | RESTful endpoints, Automatic OpenAPI docs |
+| **Database** | Neon (Serverless Postgres) | Managed relational data |
+| **Message Queue** | Upstash Redis | Serverless Celery message broker |
+| **Object Storage** | Supabase Storage | Free S3-compatible file storage |
+| **AI Inference** | Google Gemini 1.5 Flash | Multimodal document extraction |
+| **Background Workers**| Celery | Distributed task queue |
+| **Hosting** | Railway (Backend), Vercel (Frontend) | Cloud Deployment |
