@@ -21,7 +21,7 @@ export default function Footer() {
               <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>edocAI</span>
             </div>
             <p className={`text-sm leading-relaxed ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-              Enterprise-grade document intelligence. Built for modern engineering teams.
+              Enterprise AI-powered Document Intelligence. Built for modern agile teams.
             </p>
           </div>
 
@@ -73,7 +73,7 @@ export default function Footer() {
             © {new Date().getFullYear()} edocAI. All rights reserved.
           </p>
           <p className={`text-xs ${isDark ? "text-gray-600" : "text-gray-400"}`}>
-            Designed & engineered as an ML System Design portfolio project.
+            Designed & built as an ML System Design portfolio project.
           </p>
         </div>
       </div>

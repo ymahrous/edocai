@@ -41,9 +41,9 @@ export default function LoginPage() {
       }`}>
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 mb-6 shadow-lg shadow-indigo-500/30">
+          {/* <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 mb-6 shadow-lg shadow-indigo-500/30">
             <span className="text-white font-bold text-lg">E</span>
-          </div>
+          </div> */}
           <h1 className={`text-2xl font-bold tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
             Welcome back
           </h1>

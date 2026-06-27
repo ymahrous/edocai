@@ -39,7 +39,7 @@ export default function LandingPage() {
           <p className={`text-xl max-w-2xl mx-auto mb-12 leading-relaxed font-light ${
             isDark ? "text-gray-400" : "text-gray-600"
           }`}>
-            Stop manually entering data from invoices and receipts. Upload a document, and let our asynchronous AI pipeline return structured JSON in seconds.
+            Stop manually entering data from invoices and receipts. Upload a document, and let our AI pipeline return structured JSON in seconds.
           </p>
 
           <div className="flex items-center justify-center gap-4">

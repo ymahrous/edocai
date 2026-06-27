@@ -54,9 +54,9 @@ export default function SignupPage() {
       }`}>
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 mb-6 shadow-lg shadow-indigo-500/30">
+          {/* <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 mb-6 shadow-lg shadow-indigo-500/30">
             <span className="text-white font-bold text-lg">E</span>
-          </div>
+          </div> */}
           <h1 className={`text-2xl font-bold tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
             Create your account
           </h1>
@@ -77,7 +77,7 @@ export default function SignupPage() {
                   ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500" 
                   : "border-gray-200 text-gray-900 focus:border-indigo-500 placeholder-gray-400"
               }`}
-              placeholder="Work email"
+              placeholder="Email address"
               required
             />
           </div>
