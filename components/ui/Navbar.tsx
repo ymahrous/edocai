@@ -1,5 +1,5 @@
 "use client";
-
+import { logout } from "@/lib/api";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "@/app/providers/ThemeContext";
 import { useEffect, useState } from "react";
@@ -57,7 +57,7 @@ export default function Navbar() {
               {(
                 <button 
                   onClick={() => {
-                    localStorage.removeItem("token");
+                    logout();
                     router.push("/");
                   }}
                   className={`text-sm font-medium transition-colors ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}

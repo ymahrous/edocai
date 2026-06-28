@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/providers/ThemeContext";
 import Link from "next/link";
@@ -9,14 +9,84 @@ export default function SignupPage() {
   const router = useRouter();
   const { theme } = useTheme();
   const isDark = theme === "dark";
-
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockSecondsRemaining, setLockSecondsRemaining] = useState(0);
+  const [emailError, setEmailError] = useState("");
+
+  const validateEmail = (value: string): string => {
+    if (!value) return "Email is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Please enter a valid email address.";
+    return "";
+  };
+  
+  useEffect(() => {
+    if (lockedUntil === null) {
+      setIsLocked(false);
+      setLockSecondsRemaining(0);
+      return;
+    }
+  
+    const ticker = setInterval(() => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setIsLocked(false);
+        setLockSecondsRemaining(0);
+        setLockedUntil(null);
+        clearInterval(ticker);
+      } else {
+        setIsLocked(true);
+        setLockSecondsRemaining(remaining);
+      }
+    }, 1000);
+  
+    const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+    setIsLocked(remaining > 0);
+    setLockSecondsRemaining(Math.max(remaining, 0));
+  
+    return () => clearInterval(ticker);
+  }, [lockedUntil]);
+
+  const validatePassword = (value: string): string => {
+    if (value.length < 8) return "Password must be at least 8 characters.";
+    if (!/[A-Z]/.test(value)) return "Password must contain at least one uppercase letter.";
+    if (!/[0-9]/.test(value)) return "Password must contain at least one number.";
+    return "";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isLocked) {
+      setError(`Too many attempts. Try again in ${lockSecondsRemaining} seconds.`);
+      return;
+    }
+
+    const validationError = validatePassword(password);
+    if (validationError) {
+      setPasswordError(validationError);
+      return;
+    }
+
+    const emailValidationError = validateEmail(username);
+    if (emailValidationError) {
+      setEmailError(emailValidationError);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
     setError("");
     setIsLoading(true);
 
@@ -30,15 +100,24 @@ export default function SignupPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.detail || "Signup failed");
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+
+        if (newAttempts >= 5) {
+          setLockedUntil(Date.now() + 30_000);
+          setAttempts(0);
+          setError("Too many failed attempts. Please wait 30 seconds.");
+        } else {
+          throw new Error(data.detail || "Signup failed");
+        }
+        return;
       }
 
       const data = await res.json();
       localStorage.setItem("token", data.access_token);
-      
       setTimeout(() => router.push("/app"), 100);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Signup failed");
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +150,10 @@ export default function SignupPage() {
             <input
               type="email"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setEmailError(validateEmail(e.target.value));
+              }}
               className={`w-full bg-transparent text-sm pb-3 border-b-2 outline-none transition-colors placeholder:text-opacity-40 ${
                 isDark 
                   ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500" 
@@ -80,13 +162,20 @@ export default function SignupPage() {
               placeholder="Email address"
               required
             />
+
+            {emailError && (
+              <p className="text-xs text-amber-500 mt-1">{emailError}</p>
+            )}
           </div>
 
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setPasswordError(validatePassword(e.target.value));
+              }}
               className={`w-full bg-transparent text-sm pb-3 border-b-2 outline-none transition-colors placeholder:text-opacity-40 pr-10 ${
                 isDark 
                   ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500" 
@@ -95,6 +184,10 @@ export default function SignupPage() {
               placeholder="Password"
               required
             />
+
+            {passwordError && (
+              <p className="text-xs text-amber-500 mt-1">{passwordError}</p>
+            )}
             
             <button 
               type="button" 
@@ -111,6 +204,21 @@ export default function SignupPage() {
             </button>
           </div>
 
+          <div className="relative">
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`w-full bg-transparent text-sm pb-3 border-b-2 outline-none transition-colors placeholder:text-opacity-40 ${
+                  isDark
+                    ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500"
+                    : "border-gray-200 text-gray-900 focus:border-indigo-500 placeholder-gray-400"
+                }`}
+                placeholder="Confirm password"
+                required
+              />
+            </div>
+
           {error && (
             <p className="text-sm text-red-500 font-medium bg-red-500/10 px-4 py-2 rounded-lg">
               {error}
@@ -119,10 +227,14 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isLocked || !username || !password || !confirmPassword || password!=confirmPassword  || !!emailError || !!passwordError}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 text-white py-3.5 rounded-full text-sm font-semibold transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 disabled:shadow-none"
           >
-            {isLoading ? "Creating account..." : "Create account"}
+            {isLocked
+              ? `Locked (${lockSecondsRemaining}s)`
+              : isLoading
+              ? "Creating account..."
+              : "Create account"}
           </button>
         </form>
       </div>

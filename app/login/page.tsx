@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/lib/api";
 import { useTheme } from "../providers/ThemeContext";
@@ -15,17 +15,74 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const [attempts, setAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockSecondsRemaining, setLockSecondsRemaining] = useState(0);
+
+  useEffect(() => {
+  if (lockedUntil === null) {
+    setIsLocked(false);
+    setLockSecondsRemaining(0);
+    return;
+  }
+
+  const ticker = setInterval(() => {
+    const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+    if (remaining <= 0) {
+      setIsLocked(false);
+      setLockSecondsRemaining(0);
+      setLockedUntil(null);
+      clearInterval(ticker);
+    } else {
+      setIsLocked(true);
+      setLockSecondsRemaining(remaining);
+    }
+  }, 1000);
+
+  const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+  setIsLocked(remaining > 0);
+  setLockSecondsRemaining(Math.max(remaining, 0));
+
+  return () => clearInterval(ticker);
+}, [lockedUntil]);
+
+  useEffect(() => {
+    if (!isLocked) return;
+    const ticker = setInterval(() => {
+      if (Date.now() >= lockedUntil!) {
+        setLockedUntil(null);
+      }
+    }, 1000);
+    return () => clearInterval(ticker);
+  }, [isLocked, lockedUntil]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isLocked) {
+      setError(`Too many attempts. Try again in ${lockSecondsRemaining} seconds.`);
+      return;
+    }
+
     setError("");
     setIsLoading(true);
 
     try {
       await login(username, password);
-      router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+      router.push("/app");
+    } catch (err: unknown) {
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+
+      if (newAttempts >= 5) {
+        const unlockTime = Date.now() + 30_000;
+        setLockedUntil(unlockTime);
+        setAttempts(0);
+        setError("Too many failed attempts. Please wait 30 seconds.");
+      } else {
+        setError(err instanceof Error ? err.message : "Login failed");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -106,10 +163,14 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isLocked}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 text-white py-3.5 rounded-full text-sm font-semibold transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 disabled:shadow-none"
           >
-            {isLoading ? "Signing in..." : "Continue"}
+            {isLocked
+              ? `Locked (${lockSecondsRemaining}s)`
+              : isLoading
+              ? "Signing in..."
+              : "Continue"}
           </button>
         </form>
       </div>

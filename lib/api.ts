@@ -43,13 +43,31 @@ export async function login(username: string, password: string) {
 
 export function logout() {
   localStorage.removeItem("token");
+  window.dispatchEvent(new Event("storage"));
+}
+
+export function isTokenExpired(): boolean {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // exp is in seconds; Date.now() is in ms
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
 }
 
 // --- PROTECTED FETCH WRAPPER ---
 async function authFetch(url: string, options: RequestInit = {}) {
+  if (isTokenExpired()) {
+    if (typeof window !== "undefined") localStorage.removeItem("token");
+    throw new Error("Session expired");
+  }
+
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   if (!token) throw new Error("Not authenticated");
-  
+
   const res = await fetch(url, {
     ...options,
     headers: {
@@ -57,26 +75,22 @@ async function authFetch(url: string, options: RequestInit = {}) {
       "Authorization": `Bearer ${token}`,
     },
   });
-  
+
   if (res.status === 401) {
     if (typeof window !== "undefined") localStorage.removeItem("token");
     throw new Error("Session expired");
   }
-  
+
   return res;
 }
 
 // --- APP FUNCTIONS ---
 export async function uploadDocument(file: File): Promise<Document> {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("Not authenticated");
-
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${API_URL}/upload/`, {
+  const res = await authFetch(`${API_URL}/upload/`, {
     method: "POST",
-    headers: { "Authorization": `Bearer ${token}` },
     body: formData,
   });
   if (!res.ok) throw new Error("Upload failed");

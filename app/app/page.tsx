@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { uploadDocument, getDocuments, getExtraction, Document, Extraction, logout } from "@/lib/api";
+import { uploadDocument, getDocuments, getExtraction, Document, Extraction, logout, isTokenExpired } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/providers/ThemeContext";
 
@@ -34,6 +34,22 @@ export default function Home() {
     const interval = setInterval(fetchDocs, 3000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const checkSession = () => {
+      if (isTokenExpired()) {
+        localStorage.removeItem("token");
+        router.push("/login");
+      }
+    };
+
+    // Check immediately and then every 60 seconds
+    checkSession();
+    const interval = setInterval(checkSession, 60_000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
