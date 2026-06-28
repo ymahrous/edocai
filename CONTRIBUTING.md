@@ -47,14 +47,14 @@ This project follows a simple rule: be respectful. Constructive criticism is wel
    ```
 4. Copy the environment file and fill in the required values:
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
    ```
 5. Start the development server:
    ```bash
    npm run dev
    ```
 
-The app will be running at `http://localhost:3000`. You will also need a running instance of the backend API — see the backend repository for setup instructions.
+The app will be running at `http://localhost:3000`. You will also need a running instance of the [backend API](https://github.com/ymahrous/edocai-backend), see the backend repository for setup instructions.
 
 ---
 
@@ -196,4 +196,3 @@ Feature requests are not guaranteed to be implemented but all suggestions are re
 ## Questions
 
 For questions that aren't bugs or feature requests, open a [GitHub Discussion](https://github.com/ymahrous/edocai/discussions) rather than an issue.
-```
