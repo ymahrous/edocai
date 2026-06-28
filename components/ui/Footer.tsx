@@ -25,17 +25,17 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Product Links (Great for SEO) */}
+          {/* Product Links */}
           <div>
             <h4 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Product</h4>
             <ul className="space-y-3">
               <li><Link href="/app" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Dashboard</Link></li>
-              <li><Link href="/#features" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Features</Link></li>
-              <li><Link href="/#api" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>API Docs</Link></li>
+              <li><Link href="/profile" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Profile</Link></li>
+              {/* <li><Link href="/#api" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>API Docs</Link></li> */}
             </ul>
           </div>
 
-          {/* Stack Links (Interviewers love this) */}
+          {/* Stack Links */}
           <div>
             <h4 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Stack</h4>
             <ul className="space-y-3">
@@ -70,10 +70,10 @@ export default function Footer() {
           isDark ? "border-white/10" : "border-gray-200"
         }`}>
           <p className={`text-xs ${isDark ? "text-gray-600" : "text-gray-400"}`}>
-            © {new Date().getFullYear()} edocAI. All rights reserved.
+            © {new Date().getFullYear()} Yousef Mahrous. All rights reserved.
           </p>
           <p className={`text-xs ${isDark ? "text-gray-600" : "text-gray-400"}`}>
-            Designed & built as an ML System Design portfolio project.
+            Designed & built as an ML System portfolio project.
           </p>
         </div>
       </div>
