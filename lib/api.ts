@@ -8,6 +8,11 @@ export interface Document {
   created_at: string;
 }
 
+interface AuthResponse {
+  access_token: string;
+  token_type: string;
+}
+
 export interface Extraction {
   document_id: string;
   extracted_data: {
@@ -18,25 +23,40 @@ export interface Extraction {
   confidence_score: number;
 }
 
+export function decodeToken(): { sub: string; exp: number } | null {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch {
+    return null;
+  }
+}
+
 // --- AUTH FUNCTIONS ---
-export async function login(username: string, password: string) {
+export async function login(username: string, password: string): Promise<AuthResponse> {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
-    mode: "cors", // EXPLICITLY tell browser this is a cross-origin request
-    headers: { 
+    mode: "cors",
+    headers: {
       "Content-Type": "application/json",
-      "Accept": "application/json" 
+      "Accept": "application/json",
     },
     body: JSON.stringify({ username, password }),
   });
-  
+
   if (!res.ok) {
-    // Try to read the error message from the backend if possible
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Invalid credentials");
+    let detail = "Invalid credentials";
+    try {
+      const errorData = await res.json();
+      if (typeof errorData.detail === "string") detail = errorData.detail;
+    } catch {
+      // Response body was not valid JSON; use default message
+    }
+    throw new Error(detail);
   }
-  
-  const data = await res.json();
+
+  const data: AuthResponse = await res.json();
   localStorage.setItem("token", data.access_token);
   return data;
 }
@@ -44,6 +64,23 @@ export async function login(username: string, password: string) {
 export function logout() {
   localStorage.removeItem("token");
   window.dispatchEvent(new Event("storage"));
+}
+
+export async function signup(email: string, password: string): Promise<void> {
+  const res = await fetch(`${API_URL}/auth/signup`, {
+    method: "POST",
+    mode: "cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: email, password }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Signup failed");
+  }
+
+  const data = await res.json();
+  localStorage.setItem("token", data.access_token);
 }
 
 export function isTokenExpired(): boolean {
@@ -97,8 +134,8 @@ export async function uploadDocument(file: File): Promise<Document> {
   return res.json();
 }
 
-export async function getDocuments(): Promise<Document[]> {
-  const res = await authFetch(`${API_URL}/documents/`);
+export async function getDocuments(signal?: AbortSignal): Promise<Document[]> {
+  const res = await authFetch(`${API_URL}/documents/`, { signal });
   if (!res.ok) throw new Error("Failed to fetch documents");
   return res.json();
 }

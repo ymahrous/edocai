@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useTheme } from "@/app/providers/ThemeContext";
 import Link from "next/link";
+import { signup } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useTheme } from "@/app/providers/ThemeContext";
 
 export default function SignupPage() {
   const router = useRouter();
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const [passwordError, setPasswordError] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,11 +23,37 @@ export default function SignupPage() {
   const [isLocked, setIsLocked] = useState(false);
   const [lockSecondsRemaining, setLockSecondsRemaining] = useState(0);
   const [emailError, setEmailError] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState<{
+    score: number;
+    label: string;
+    color: string;
+  }>({ score: 0, label: "", color: "" });
 
   const validateEmail = (value: string): string => {
     if (!value) return "Email is required.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Please enter a valid email address.";
     return "";
+  };
+
+  const getPasswordStrength = (value: string): {
+    score: number;
+    label: string;
+    color: string;
+  } => {
+    if (!value) return { score: 0, label: "", color: "" };
+
+    let score = 0;
+    if (value.length >= 8) score++;
+    if (value.length >= 12) score++;
+    if (/[A-Z]/.test(value)) score++;
+    if (/[0-9]/.test(value)) score++;
+    if (/[^A-Za-z0-9]/.test(value)) score++;
+
+    if (score <= 1) return { score, label: "Very weak",  color: "bg-red-500" };
+    if (score === 2) return { score, label: "Weak",       color: "bg-orange-500" };
+    if (score === 3) return { score, label: "Fair",       color: "bg-yellow-500" };
+    if (score === 4) return { score, label: "Strong",     color: "bg-blue-500" };
+    return              { score,     label: "Very strong", color: "bg-emerald-500" };
   };
   
   useEffect(() => {
@@ -76,7 +104,7 @@ export default function SignupPage() {
       return;
     }
 
-    const emailValidationError = validateEmail(username);
+    const emailValidationError = validateEmail(email);
     if (emailValidationError) {
       setEmailError(emailValidationError);
       return;
@@ -91,35 +119,19 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
-        method: "POST",
-        mode: "cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        const newAttempts = attempts + 1;
-        setAttempts(newAttempts);
-
-        if (newAttempts >= 5) {
-          setLockedUntil(Date.now() + 30_000);
-          setAttempts(0);
-          setError("Too many failed attempts. Please wait 30 seconds.");
-        } else {
-          throw new Error(data.detail || "Signup failed");
-        }
-        return;
-      }
-
-      const data = await res.json();
-      localStorage.setItem("token", data.access_token);
+      await signup(email, password);
       setTimeout(() => router.push("/app"), 100);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Signup failed");
-    } finally {
-      setIsLoading(false);
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+
+      if (newAttempts >= 5) {
+        setLockedUntil(Date.now() + 30_000);
+        setAttempts(0);
+        setError("Too many failed attempts. Please wait 30 seconds.");
+      } else {
+        setError(err instanceof Error ? err.message : "Signup failed");
+      }
     }
   };
 
@@ -149,9 +161,9 @@ export default function SignupPage() {
           <div className="relative">
             <input
               type="email"
-              value={username}
+              value={email}
               onChange={(e) => {
-                setUsername(e.target.value);
+                setEmail(e.target.value);
                 setEmailError(validateEmail(e.target.value));
               }}
               className={`w-full bg-transparent text-sm pb-3 border-b-2 outline-none transition-colors placeholder:text-opacity-40 ${
@@ -168,56 +180,94 @@ export default function SignupPage() {
             )}
           </div>
 
-          <div className="relative">
+          {/* Password Input Block */}
+          <div className="relative flex items-center">
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
                 setPasswordError(validatePassword(e.target.value));
+                setPasswordStrength(getPasswordStrength(e.target.value));
               }}
               className={`w-full bg-transparent text-sm pb-3 border-b-2 outline-none transition-colors placeholder:text-opacity-40 pr-10 ${
-                isDark 
-                  ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500" 
+                isDark
+                  ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500"
                   : "border-gray-200 text-gray-900 focus:border-indigo-500 placeholder-gray-400"
               }`}
               placeholder="Password"
               required
             />
-
-            {passwordError && (
-              <p className="text-xs text-amber-500 mt-1">{passwordError}</p>
-            )}
-            
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className={`absolute right-0 top-1/2 -translate-y-1/2 p-1 transition-colors ${
+              className={`absolute right-0 bottom-3 p-1 transition-colors ${
                 isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"
               }`}
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
               ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
               )}
             </button>
           </div>
 
-          <div className="relative">
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`w-full bg-transparent text-sm pb-3 border-b-2 outline-none transition-colors placeholder:text-opacity-40 ${
-                  isDark
-                    ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500"
-                    : "border-gray-200 text-gray-900 focus:border-indigo-500 placeholder-gray-400"
-                }`}
-                placeholder="Confirm password"
-                required
-              />
+          {/* Strength Bar */}
+          {password && (
+            <div className="mt-3 space-y-1.5">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((segment) => (
+                  <div
+                    key={segment}
+                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                      segment <= passwordStrength.score
+                        ? passwordStrength.color
+                        : isDark
+                        ? "bg-white/10"
+                        : "bg-gray-200"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className={`text-xs transition-colors ${
+                passwordStrength.score <= 1 ? "text-red-500" :
+                passwordStrength.score === 2 ? "text-orange-500" :
+                passwordStrength.score === 3 ? "text-yellow-500" :
+                passwordStrength.score === 4 ? "text-blue-500" :
+                "text-emerald-500"
+              }`}>
+                {passwordStrength.label}
+              </p>
             </div>
+          )}
+
+          {/* Password validation error */}
+          {passwordError && (
+            <p className="text-xs text-amber-500 mt-1">{passwordError}</p>
+          )}
+
+          {/* Confirm Password Input Block */}
+          <div className="relative">
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={`w-full bg-transparent text-sm pb-3 border-b-2 outline-none transition-colors placeholder:text-opacity-40 ${
+                isDark
+                  ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500"
+                  : "border-gray-200 text-gray-900 focus:border-indigo-500 placeholder-gray-400"
+              }`}
+              placeholder="Confirm password"
+              required
+            />
+          </div>
 
           {error && (
             <p className="text-sm text-red-500 font-medium bg-red-500/10 px-4 py-2 rounded-lg">
@@ -225,9 +275,31 @@ export default function SignupPage() {
             </p>
           )}
 
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-0.5 accent-indigo-600 cursor-pointer"
+            />
+            <label htmlFor="terms" className={`text-xs leading-relaxed cursor-pointer ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}>
+              I agree to the{" "}
+              <a href="/terms" target="_blank" className="text-indigo-500 hover:text-indigo-400 transition-colors">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" target="_blank" className="text-indigo-500 hover:text-indigo-400 transition-colors">
+                Privacy Policy
+              </a>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={isLoading || isLocked || !username || !password || !confirmPassword || password!=confirmPassword  || !!emailError || !!passwordError}
+            disabled={isLoading || isLocked || !email || !password || !confirmPassword || password!=confirmPassword  || !!emailError || !!passwordError || !agreedToTerms}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 text-white py-3.5 rounded-full text-sm font-semibold transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 disabled:shadow-none"
           >
             {isLocked
@@ -243,7 +315,7 @@ export default function SignupPage() {
       <p className={`relative mt-8 text-sm ${isDark ? "text-gray-500" : "text-gray-400"}`}>
         Already have an account?{" "}
         <Link href="/login" className="font-semibold text-indigo-500 hover:text-indigo-400 transition-colors">
-          Log in
+          Login
         </Link>
       </p>
     </section>

@@ -9,7 +9,7 @@ import Link from "next/link";
 export default function LoginPage() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +69,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(username, password);
+      await login(email, password);
       router.push("/app");
     } catch (err: unknown) {
       const newAttempts = attempts + 1;
@@ -114,8 +114,8 @@ export default function LoginPage() {
           <div className="relative">
             <input
               type="email"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className={`w-full bg-transparent text-sm pb-3 border-b-2 outline-none transition-colors placeholder:text-opacity-40 ${
                 isDark 
                   ? "border-gray-700 text-white focus:border-indigo-500 placeholder-gray-500" 
@@ -163,7 +163,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isLoading || isLocked}
+            disabled={isLoading || isLocked || !email || !password}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400 text-white py-3.5 rounded-full text-sm font-semibold transition-all shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 disabled:shadow-none"
           >
             {isLocked

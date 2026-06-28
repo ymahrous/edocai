@@ -27,12 +27,28 @@ export default function Home() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+
+    let controller = new AbortController();
+
     const fetchDocs = async () => {
-      try { const docs = await getDocuments(); setDocuments(docs); } catch (e) { console.error(e); }
+      controller.abort();
+      controller = new AbortController();
+      try {
+        const docs = await getDocuments(controller.signal);
+        setDocuments(docs);
+      } catch (e) {
+        if (e instanceof Error && e.name === "AbortError") return;
+        console.error(e);
+      }
     };
+
     fetchDocs();
     const interval = setInterval(fetchDocs, 3000);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      controller.abort();
+    };
   }, [isAuthenticated]);
 
   useEffect(() => {

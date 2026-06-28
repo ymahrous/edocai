@@ -54,6 +54,18 @@ export default function Navbar() {
                   Dashboard
                 </button>
               )}
+              
+              {pathname !== "/profile" && (
+                <button
+                  onClick={() => router.push("/profile")}
+                  className={`text-sm font-medium transition-colors ${
+                    isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Profile
+                </button>
+              )}
+
               {(
                 <button 
                   onClick={() => {
@@ -72,7 +84,7 @@ export default function Navbar() {
                 onClick={() => router.push("/login")}
                 className={`text-sm font-medium transition-colors ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
               >
-                Log in
+                Login
               </button>
               <button 
                 onClick={() => router.push("/signup")}
