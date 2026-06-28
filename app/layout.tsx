@@ -1,9 +1,9 @@
+import "./globals.css";
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
-import { ThemeProvider } from "./providers/ThemeContext";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
-import "./globals.css";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import { ThemeProvider, themeScript } from "./providers/ThemeContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
@@ -30,18 +30,18 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} ${jetbrainsMono.className} antialiased dark`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className={`${inter.className} ${jetbrainsMono.className} antialiased`}>
         <ThemeProvider>
           <header>
             <Navbar />
           </header>
-          
-          {/* min-h-screen ensures the footer is pushed to the bottom even if content is short */}
           <div className="min-h-screen flex flex-col">
             <main className="flex-grow">{children}</main>
             <Footer />
           </div>
-
         </ThemeProvider>
       </body>
     </html>

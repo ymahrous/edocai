@@ -21,7 +21,7 @@ export default function Footer() {
               <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>edocAI</span>
             </div>
             <p className={`text-sm leading-relaxed ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-              Enterprise AI-powered Document Intelligence. Built for modern agile teams.
+              AI-powered Document Processing Intelligence.
             </p>
           </div>
 
@@ -30,8 +30,8 @@ export default function Footer() {
             <h4 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Product</h4>
             <ul className="space-y-3">
               <li><Link href="/app" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Dashboard</Link></li>
-              <li><Link href="/profile" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Profile</Link></li>
-              {/* <li><Link href="/#api" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>API Docs</Link></li> */}
+              <li><Link href="/#features" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Features</Link></li>
+              <li><Link href="/#api" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>API Docs</Link></li>
             </ul>
           </div>
 
