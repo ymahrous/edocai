@@ -180,7 +180,7 @@ Please search existing issues before opening a new one.
 
 ---
 
-## Suggesting Features
+## Questions and Suggesting Features
 
 Open a [GitHub Issue](https://github.com/ymahrous/edocai/issues/new) with:
 
@@ -190,9 +190,3 @@ Open a [GitHub Issue](https://github.com/ymahrous/edocai/issues/new) with:
 - **Additional context** — mockups, examples, or prior art
 
 Feature requests are not guaranteed to be implemented but all suggestions are read and considered.
-
----
-
-## Questions
-
-For questions that aren't bugs or feature requests, open a [GitHub Discussion](https://github.com/ymahrous/edocai/discussions) rather than an issue.
