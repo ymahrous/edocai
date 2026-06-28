@@ -11,7 +11,7 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jet
 // GLOBAL SEO METADATA
 export const metadata: Metadata = {
   title: {
-    default: "edocAI - Enterprise AI Document Extraction",
+    default: "edocAI",
     template: "%s | edocAI"
   },
   description: "Instantly transform unstructured invoices and receipts into structured JSON using AI. Built with FastAPI, Celery, and Google Gemini.",
@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    // url: "https://edocAI.app", // Replace with your real domain later
+    url: "https://edocai.vercel.app",
     siteName: "edocAI",
-    title: "edocAI - Enterprise AI Document Extraction",
+    title: "edocAI | AI-powered Document Processing",
     description: "Instantly transform unstructured invoices and receipts into structured JSON.",
   },
   robots: { index: true, follow: true },
