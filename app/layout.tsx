@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
@@ -8,7 +9,6 @@ import { ThemeProvider, themeScript } from "./providers/ThemeContext";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" });
 
-// GLOBAL SEO METADATA
 export const metadata: Metadata = {
   title: {
     default: "edocAI",
@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -36,11 +37,19 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${inter.className} ${jetbrainsMono.className} antialiased`}>
         <ThemeProvider>
           <header>
-            <Navbar />
+            <Suspense fallback={null}>
+              <Navbar />
+            </Suspense>
           </header>
           <div className="min-h-screen flex flex-col">
-            <main className="flex-grow">{children}</main>
-            <Footer />
+            <main className="flex-grow">
+              <Suspense fallback={null}>
+                {children}
+              </Suspense>
+            </main>
+            <Suspense fallback={null}>
+              <Footer />
+            </Suspense>
           </div>
         </ThemeProvider>
       </body>
