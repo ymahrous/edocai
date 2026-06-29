@@ -63,7 +63,7 @@ export default function Navbar() {
             alt="edocAI"
             width={80}
             height={24}
-            className={isDark ? "invert-0" : "invert"}
+            className={"invert-0"}
             style={{ width: "auto", height: "24px" }}
           />
         </div>
