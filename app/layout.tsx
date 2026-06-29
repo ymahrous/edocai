@@ -11,17 +11,21 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jet
 
 export const metadata: Metadata = {
   title: {
-    default: "edocAI",
-    template: "%s | edocAI"
+    default: "edocAI - AI Document Processing",
+    template: "%s | edocAI",
   },
   description: "Instantly transform unstructured invoices and receipts into structured JSON using AI. Built with FastAPI, Celery, and Google Gemini.",
   keywords: ["AI", "Machine Learning", "Document Extraction", "OCR", "FastAPI", "Next.js"],
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://edocai.vercel.app",
     siteName: "edocAI",
-    title: "edocAI | AI-powered Document Processing",
+    title: "edocAI - AI Document Processing",
     description: "Instantly transform unstructured invoices and receipts into structured JSON.",
   },
   robots: { index: true, follow: true },
@@ -42,7 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </Suspense>
           </header>
           <div className="min-h-screen flex flex-col">
-            <main className="flex-grow">
+            <main className="grow">
               <Suspense fallback={null}>
                 {children}
               </Suspense>

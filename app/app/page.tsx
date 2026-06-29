@@ -7,7 +7,6 @@ import {
   getExtraction,
   Document,
   Extraction,
-  logout,
   isTokenExpired,
 } from "@/lib/api";
 import { useRouter } from "next/navigation";

@@ -22,8 +22,7 @@ Thank you for your interest in contributing. This document outlines the process 
   - [Screenshots (if applicable)](#screenshots-if-applicable)
   - [Code Style](#code-style)
   - [Reporting Bugs](#reporting-bugs)
-  - [Suggesting Features](#suggesting-features)
-  - [Questions](#questions)
+  - [Questions and Suggesting Features](#questions-and-suggesting-features)
 
 ---
 
@@ -101,7 +100,7 @@ Follow the [Conventional Commits](https://www.conventionalcommits.org/) specific
 feat(auth): add confirm password field to signup
 fix(navbar): sync logout state on landing page
 refactor(api): replace manual token fetch with authFetch in uploadDocument
-chore: rename package name from extractiq-frontend to edocai
+chore: rename package name from edocai to example
 ```
 
 **Rules:**

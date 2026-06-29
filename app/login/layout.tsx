@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Log In",
+  title: "Login",
   description: "Sign in to your edocAI account to access your document dashboard.",
   robots: { index: false, follow: false },
 };

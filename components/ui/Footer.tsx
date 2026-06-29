@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTheme } from "@/app/providers/ThemeContext";
+import Image from "next/image";
 
 export default function Footer() {
   const { theme } = useTheme();
@@ -17,7 +18,13 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              {/* <div className="h-7 w-7 bg-indigo-600 rounded-md flex items-center justify-center text-white font-bold text-xs">E</div> */}
+              <Image
+                src="/logo.svg"
+                alt="edocAI"
+                width={20}
+                height={20}
+                className={`h-5 w-auto ${isDark ? "invert-0" : "invert"}`}
+              />
               <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>edocAI</span>
             </div>
             <p className={`text-sm leading-relaxed ${isDark ? "text-gray-500" : "text-gray-400"}`}>
