@@ -61,9 +61,10 @@ export default function Navbar() {
           <Image
             src="/logo.svg"
             alt="edocAI"
-            width={24}
+            width={80}
             height={24}
-            className={`h-6 w-auto ${isDark ? "invert-0" : "invert"}`}
+            className={isDark ? "invert-0" : "invert"}
+            style={{ width: "auto", height: "24px" }}
           />
         </div>
 

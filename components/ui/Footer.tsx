@@ -21,9 +21,10 @@ export default function Footer() {
               <Image
                 src="/logo.svg"
                 alt="edocAI"
-                width={20}
+                width={80}
                 height={20}
-                className={`h-5 w-auto ${isDark ? "invert-0" : "invert"}`}
+                className={isDark ? "invert-0" : "invert"}
+                style={{ width: "auto", height: "20px" }}
               />
               <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>edocAI</span>
             </div>
