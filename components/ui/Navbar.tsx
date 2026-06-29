@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
-import { useTheme } from "@/app/providers/ThemeContext";
+import Image from "next/image";
 import { logout } from "@/lib/api";
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useTheme } from "@/app/providers/ThemeContext";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
   const router = useRouter();

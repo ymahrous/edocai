@@ -1,42 +1,97 @@
 "use client";
-import LegalLayout from "@/app/legal/LegalLayout";
+
+import { useTheme } from "@/app/providers/ThemeContext";
 
 export default function TermsOfService() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
-    <LegalLayout title="Terms of Service">
-      <p className="mb-6">
-        Welcome to edocAI. These Terms of Service ("Terms") apply to your use of the edocAI web application, API, and associated documentation (the "Service"). By accessing or using the Service, you agree to be bound by these Terms.
-      </p>
+    <section className={`min-h-screen pt-32 pb-24 px-6 ${
+      isDark ? "bg-black text-gray-300" : "bg-white text-gray-700"
+    }`}>
+      <div className="max-w-3xl mx-auto">
+        <h1 className={`text-4xl font-bold tracking-tight mb-4 ${
+          isDark ? "text-white" : "text-gray-900"
+        }`}>
+          Terms of Service
+        </h1>
+        <p className={`text-sm mb-12 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+          Last updated: June 2026
+        </p>
 
-      <h2 id="1">1. Acceptance of Terms</h2>
-      <p>By creating an account or using the Service, you acknowledge that you have read, understood, and agree to be bound by these Terms. If you do not agree to all of these Terms, you are not authorized to use the Service.</p>
+        <div className="space-y-8">
+          <p>
+            Welcome to edocAI. These Terms of Service apply to your use of the edocAI web
+            application, API, and associated documentation. By accessing or using the Service,
+            you agree to be bound by these Terms.
+          </p>
 
-      <h2 id="2">2. Description of Service</h2>
-      <p>edocAI provides an AI-powered application programming interface (API) that allows users to upload documents (such as invoices and receipts) and receive structured JSON data extracted from those documents. The Service is provided "as is" and is intended for educational and portfolio demonstration purposes.</p>
-
-      <h2 id="3">3. User Accounts and Security</h2>
-      <p>You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately of any unauthorized use of your account. edocAI uses JSON Web Tokens (JWT) for session management. Tokens are issued for a limited duration and must be stored securely by the client.</p>
-
-      <h2 id="4">4. User Content</h2>
-      <p>You retain all rights to the documents you upload ("User Content"). By uploading User Content, you grant edocAI a limited, non-exclusive license to process the document strictly for the purpose of generating the requested extraction output. We do not use your documents to train our underlying AI models.</p>
-
-      <h2 id="5">5. Fair Use and Rate Limits</h2>
-      <p>To ensure platform stability, edocAI enforces rate limits on API endpoints. You agree not to abuse the Service by circumventing these limits, attempting to overload the infrastructure, or using automated scripts to mass-extract data without authorization.</p>
-
-      <h2 id="6">6. Intellectual Property</h2>
-      <p>The edocAI name, logo, underlying code, and UI design are the intellectual property of edocAI. You may not copy, modify, or distribute any part of the Service without prior written consent.</p>
-
-      <h2 id="7">7. Disclaimer of Warranties</h2>
-      <p>THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. AI EXTRACTION RESULTS MAY CONTAIN INACCURACIES. YOU SHOULD VERIFY ALL EXTRACTED DATA BEFORE USING IT IN PRODUCTION ENVIRONMENTS.</p>
-
-      <h2 id="8">8. Limitation of Liability</h2>
-      <p>IN NO EVENT SHALL EDOCAI, ITS DEVELOPERS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING OUT OF YOUR USE OF THE SERVICE.</p>
-
-      <h2 id="9">9. Changes to Terms</h2>
-      <p>We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting within the Service. Your continued use of the Service constitutes acceptance of the modified Terms.</p>
-
-      <h2 id="10">10. Contact Information</h2>
-      <p>For questions about these Terms, please open an issue in the project's public GitHub repository.</p>
-    </LegalLayout>
+          {[
+            {
+              id: "1",
+              title: "1. Acceptance of Terms",
+              content: "By creating an account or using the Service, you acknowledge that you have read, understood, and agree to be bound by these Terms. If you do not agree to all of these Terms, you are not authorized to use the Service.",
+            },
+            {
+              id: "2",
+              title: "2. Description of Service",
+              content: "edocAI provides an AI-powered API that allows users to upload documents such as invoices and receipts and receive structured JSON data extracted from those documents. The Service is provided as-is and is intended for educational and portfolio demonstration purposes.",
+            },
+            {
+              id: "3",
+              title: "3. User Accounts and Security",
+              content: "You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately of any unauthorized use of your account. edocAI uses JSON Web Tokens for session management. Tokens are issued for a limited duration and must be stored securely by the client.",
+            },
+            {
+              id: "4",
+              title: "4. User Content",
+              content: "You retain all rights to the documents you upload. By uploading content, you grant edocAI a limited, non-exclusive license to process the document strictly for the purpose of generating the requested extraction output. We do not use your documents to train our underlying AI models.",
+            },
+            {
+              id: "5",
+              title: "5. Fair Use and Rate Limits",
+              content: "To ensure platform stability, edocAI enforces rate limits on API endpoints. You agree not to abuse the Service by circumventing these limits, attempting to overload the infrastructure, or using automated scripts to mass-extract data without authorization.",
+            },
+            {
+              id: "6",
+              title: "6. Intellectual Property",
+              content: "The edocAI name, logo, underlying code, and UI design are the intellectual property of edocAI. You may not copy, modify, or distribute any part of the Service without prior written consent.",
+            },
+            {
+              id: "7",
+              title: "7. Disclaimer of Warranties",
+              content: "The Service is provided on an as-is and as-available basis without warranties of any kind, either express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement. AI extraction results may contain inaccuracies. You should verify all extracted data before using it in production environments.",
+            },
+            {
+              id: "8",
+              title: "8. Limitation of Liability",
+              content: "In no event shall edocAI, its developers, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages arising out of your use of the Service.",
+            },
+            {
+              id: "9",
+              title: "9. Changes to Terms",
+              content: "We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting within the Service. Your continued use of the Service constitutes acceptance of the modified Terms.",
+            },
+            {
+              id: "10",
+              title: "10. Contact Information",
+              content: "For questions about these Terms, please open an issue in the project's public GitHub repository.",
+            },
+          ].map(({ id, title, content }) => (
+            <div key={id} id={id} className={`rounded-2xl border p-6 ${
+              isDark ? "bg-white/5 border-white/10" : "bg-gray-50 border-gray-200"
+            }`}>
+              <h2 className={`text-base font-semibold mb-3 ${
+                isDark ? "text-white" : "text-gray-900"
+              }`}>
+                {title}
+              </h2>
+              <p className="text-sm leading-relaxed">{content}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
