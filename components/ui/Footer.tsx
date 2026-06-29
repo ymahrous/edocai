@@ -23,10 +23,10 @@ export default function Footer() {
                 alt="edocAI"
                 width={80}
                 height={20}
-                className={isDark ? "invert-0" : "invert"}
+                className={"invert-0"}
                 style={{ width: "auto", height: "20px" }}
               />
-              <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>edocAI</span>
+              {/* <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>edocAI</span> */}
             </div>
             <p className={`text-sm leading-relaxed ${isDark ? "text-gray-500" : "text-gray-400"}`}>
               AI-powered Document Processing Intelligence.
