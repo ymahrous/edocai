@@ -1,6 +1,6 @@
 <div align="center">
 
-# edocAI
+# edocAI [![CI/CD](https://github.com/ymahrous/edocai/actions/workflows/ci.yml/badge.svg)](https://github.com/ymahrous/edocai/actions/workflows/ci.yml)
 
 **Enterprise Asynchronous Document Intelligence**
 
