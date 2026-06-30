@@ -2,7 +2,7 @@
 
 # edocAI — [![CI/CD](https://github.com/ymahrous/edocai/actions/workflows/ci.yml/badge.svg)](https://github.com/ymahrous/edocai/actions/workflows/ci.yml)
 
-**The web client for edocAI, an asynchronous AI document extraction platform.**
+**The web client for edocAI, an asynchronous AI-powered document processing platform.**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
