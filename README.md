@@ -1,99 +1,53 @@
 <div align="center">
 
-# edocAI [![CI/CD](https://github.com/ymahrous/edocai/actions/workflows/ci.yml/badge.svg)](https://github.com/ymahrous/edocai/actions/workflows/ci.yml)
+# edocAI — [![CI/CD](https://github.com/ymahrous/edocai/actions/workflows/ci.yml/badge.svg)](https://github.com/ymahrous/edocai/actions/workflows/ci.yml)
 
-**Enterprise Asynchronous Document Intelligence**
-
-*Transform unstructured invoices and receipts into structured JSON — at scale, without timeouts.*
+**The web client for edocAI, an asynchronous AI document extraction platform.**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Celery](https://img.shields.io/badge/Celery-5.3-green?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
-[![Gemini](https://img.shields.io/badge/Google%20Gemini-1.5%20Flash-4285F4?logo=google&logoColor=white)](https://ai.google.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-edocai.vercel.app-0070F3?logo=vercel&logoColor=white)](https://edocai.vercel.app)
 
 </div>
 
 ---
 
-## The Problem
+## Overview
 
-Standard web APIs have a hard limit: if your server doesn't respond within ~30 seconds, the connection is dropped. AI document extraction can easily take 10–30 seconds per file. Naive implementations fail under real-world load.
+This is the Next.js frontend for edocAI, a SaaS-style web application where users upload invoices and receipts and receive structured JSON extractions back, processed asynchronously by a separate backend API.
 
-edocAI solves this with a **an async architecture** — the API responds in ~100ms, and a background worker does the heavy lifting independently.
+This repository contains the client only. It talks to the [edocAI backend](https://github.com/ymahrous/edocai-backend) (FastAPI + Celery + Google Gemini) over a REST API and renders no AI logic itself.
 
 ---
 
-## How It Works
+## Features
 
-```
-User uploads file
-       │
-       ▼
-┌──────────────┐    saves file     ┌─────────────────┐
-│   FastAPI    │ ─────────────────▶│ Supabase Storage│
-│  (Producer)  │                   └─────────────────┘
-│              │    writes PENDING ┌─────────────────┐
-│              │ ─────────────────▶│  Neon Postgres  │
-│              │                   └─────────────────┘
-│              │    pushes job     ┌─────────────────┐
-└──────────────┘ ─────────────────▶│  Upstash Redis  │
-                                   └────────┬────────┘
-                                            │ pulls job
-                                            ▼
-                                   ┌─────────────────┐
-                                   │  Celery Worker  │
-                                   │  (Consumer)     │
-                                   │                 │
-                                   │  1. Download    │
-                                   │  2. AI Inference│──▶ Gemini 1.5 Flash
-                                   │  3. COMPLETED   │       │ (rate limited?)
-                                   └─────────────────┘       ▼
-                                                       PyMuPDF + LLM fallback
-```
-
-### AI Pipeline & Fallback Router
-
-The worker uses a two-stage fallback to maximize uptime on free-tier rate limits:
-
-| Attempt | Strategy | Trigger |
-|---|---|---|
-| **1** | Google Gemini 1.5 Flash (vision) | Always tried first |
-| **2** | PyMuPDF text extraction + LLM | Only on rate-limit error |
-
-All output is returned as **strictly typed JSON**.
+- **Email/password authentication** with JWT bearer tokens, including password strength validation, rate-limited login attempts, and a confirm-password flow on signup
+- **Document dashboard** with drag-and-drop upload, live polling for processing status, and rendered JSON extraction results
+- **Account page** for viewing session info and changing password
+- **Dark/light theme** with system preference detection and cross-tab sync
+- **Responsive navigation** with a mobile menu and active-route highlighting
+- **Legal pages** (Terms of Service, Privacy Policy) written for the actual infrastructure this app runs on
+- **SEO-ready**: per-route metadata, sitemap, robots.txt, Open Graph tags
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| **Frontend** | Next.js 16, React 19, Tailwind CSS v4 | SaaS UI, SSR, dynamic theming |
-| **UI Components** | shadcn/ui, Radix UI | Accessible component primitives |
-| **Backend API** | FastAPI (Python 3.11) | RESTful endpoints, OpenAPI docs |
-| **Task Queue** | Celery 5.3 | Distributed async workers |
-| **Message Broker** | Upstash Redis | Serverless job queue |
-| **Database** | Neon (Serverless Postgres) | Managed relational storage |
-| **Object Storage** | Supabase Storage | S3-compatible file store |
-| **AI Inference** | Google Gemini 1.5 Flash | Multimodal document extraction |
-| **Auth** | JWT (Bearer tokens) + bcrypt | Stateless authentication |
-| **Frontend Host** | Vercel | Global CDN, zero-config deploy |
-| **Backend Host** | Railway | Docker-based, auto-deploy on push |
-
----
-
-## Security Model
-
-edocAI is built with **multi-tenant isolation** as a first-class concern, not an afterthought.
-
-**Authentication** — Stateless JWTs with Bearer auth. No sessions, no cookies. Every request is independently verified.
-
-**Data Isolation** — Row-Level Security (RLS) is enforced at the PostgreSQL level via `owner_id` foreign keys. Even if a bug exists in the Python logic, users are structurally prevented from accessing each other's documents.
-
-**Password Hashing** — Uses raw `bcrypt` (not `passlib`), which avoids known incompatibilities with some fork/DNS behavior in production environments.
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19, Tailwind CSS v4 |
+| Components | shadcn/ui, Radix UI primitives |
+| Icons | lucide-react |
+| Language | TypeScript (strict mode) |
+| Linting | ESLint (`eslint-config-next`), Prettier |
+| Git hooks | Husky + lint-staged |
+| CI | GitHub Actions |
+| Hosting | Vercel |
 
 ---
 
@@ -101,21 +55,54 @@ edocAI is built with **multi-tenant isolation** as a first-class concern, not an
 
 ```
 edocai/
-├── app/                    # Next.js App Router
-│   ├── (auth)/             # Login / signup routes
-│   ├── dashboard/          # Authenticated SaaS UI
-│   └── api/                # Next.js API route handlers
+├── app/
+│   ├── page.tsx                 # Landing page
+│   ├── layout.tsx               # Root layout, fonts, metadata, theme script
+│   ├── globals.css              # Tailwind v4 theme config
+│   ├── sitemap.ts               # Dynamic sitemap generation
+│   ├── not-found.tsx            # Custom 404
+│   ├── app/
+│   │   ├── page.tsx             # Authenticated dashboard
+│   │   ├── layout.tsx           # Route metadata
+│   │   ├── loading.tsx          # Skeleton loading state
+│   │   └── error.tsx            # Error boundary
+│   ├── login/
+│   │   ├── page.tsx
+│   │   └── layout.tsx
+│   ├── signup/
+│   │   ├── page.tsx
+│   │   └── layout.tsx
+│   ├── profile/
+│   │   ├── page.tsx             # Account settings, password change
+│   │   └── layout.tsx
+│   ├── privacy/
+│   │   ├── page.tsx
+│   │   └── layout.tsx
+│   ├── terms/
+│   │   ├── page.tsx
+│   │   └── layout.tsx
+│   └── providers/
+│       └── ThemeContext.tsx     # Dark/light theme provider
 ├── components/
-│   └── ui/                 # shadcn/ui component library
-├── lib/                    # Shared utilities, API client
-├── public/                 # Static assets
-├── next.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
-└── package.json
+│   └── ui/
+│       ├── Navbar.tsx
+│       ├── Footer.tsx
+│       ├── AuthCard.tsx         # Shared login/signup card shell
+│       ├── PasswordToggle.tsx   # Shared show/hide password button
+│       └── ...                  # shadcn/ui primitives
+├── lib/
+│   ├── api.ts                   # Backend API client
+│   └── utils.ts                 # cn() helper
+├── public/
+│   ├── logo.svg
+│   ├── favicon.svg
+│   └── robots.txt
+├── .github/workflows/ci.yml     # Lint, type-check, build
+├── .husky/pre-commit
+├── .lintstagedrc.json
+├── .prettierrc
+└── eslint.config.mjs
 ```
-
-> **Note:** The FastAPI backend and Celery worker live in a separate repository, deployed independently to Railway.
 
 ---
 
@@ -124,30 +111,24 @@ edocai/
 ### Prerequisites
 
 - Node.js 20+
-- A running instance of the [edocAI backend API](https://github.com/ymahrous/edocai)
+- A running instance of the [edocAI backend](https://github.com/ymahrous/edocai-backend), locally or deployed
 
 ### Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/ymahrous/edocai.git
 cd edocai
-
-# Install dependencies
 npm install
-
-# Configure environment variables
 cp .env.example .env.local
 ```
 
 Edit `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000   # Your FastAPI backend URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ```bash
-# Start the development server
 npm run dev
 ```
 
@@ -155,72 +136,66 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
+## Available Scripts
+
+```bash
+npm run dev      # Start the dev server
+npm run build    # Production build
+npm run start    # Start the production server
+npm run lint     # Run ESLint
+```
+
+---
+
+## Git Hooks
+
+This repo uses Husky and lint-staged. On every commit:
+
+- Staged `.ts`/`.tsx` files are linted with ESLint (`--fix`)
+- Staged `.ts`, `.tsx`, `.json`, `.css`, `.md` files are formatted with Prettier
+
+No setup needed — hooks are installed automatically via `npm install` (`prepare` script).
+
+---
+
+## Continuous Integration
+
+Every push and pull request to `main` runs:
+
+1. `npm run lint`
+2. `npx tsc --noEmit`
+3. `npm run build`
+
+See `.github/workflows/ci.yml`. The build step requires a `NEXT_PUBLIC_API_URL` repository secret pointing to a reachable backend URL.
+
+---
+
 ## Deployment
 
-The full stack deploys to free-tier cloud services with zero configuration.
-
-### Backend (Railway)
-
-1. Connect your GitHub repo to [Railway](https://railway.app).
-2. Railway auto-detects the `Procfile` and deploys two services:
-   - `web` — the FastAPI server
-   - `worker` — the Celery consumer
-3. Add environment variables (API keys, DB URLs, Redis URL) in the Railway dashboard.
-
-### Frontend (Vercel)
-
-1. Connect the repo to [Vercel](https://vercel.com).
-2. Set `NEXT_PUBLIC_API_URL` to your Railway API URL.
-3. Deploy. Vercel handles everything else.
-
-### Environment Variables
+Deployed to [Vercel](https://vercel.com). Connect the repository, set `NEXT_PUBLIC_API_URL` to the deployed backend's URL, and deploy — no additional configuration required.
 
 | Variable | Required | Description |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | ✅ | Base URL of the FastAPI backend |
+| `NEXT_PUBLIC_API_URL` | ✅ | Base URL of the edocAI backend API |
 
 ---
 
-## Key Engineering Decisions
+## Design Notes
 
-**Why Celery + Redis instead of threading?**
-Python's GIL prevents true parallelism for CPU/IO-bound tasks. Offloading AI inference to a separate Celery process keeps the API non-blocking and allows horizontal scaling of workers independently of the API layer.
+**Theming** — An inline script in `app/layout.tsx` runs before React hydrates, reading `localStorage` and `prefers-color-scheme` to set the theme class on `<html>` immediately. This avoids a flash of the wrong theme on load. Theme changes are synced across browser tabs using the native `storage` event.
 
-**Why raw `bcrypt` instead of `passlib`?**
-`passlib` has documented incompatibilities with macOS and certain Linux fork behaviors. The raw `bcrypt` library is lighter, more predictable, and eliminates a class of production surprises.
+**Auth state** — JWT is stored in `localStorage`. Components that need to react to login/logout state (Navbar, landing page CTA) listen for `storage` events, which `logout()` dispatches manually to support same-tab updates.
 
-**Why DB-level RLS instead of application-level filtering?**
-Filtering in Python is only as reliable as the code. PostgreSQL RLS is enforced by the database engine itself — it's a hard constraint that survives any application-layer bug.
-
-**Why the Gemini Interactions API?**
-The standard REST vision API requires manual base64 encoding, MIME type management, and verbose JSON construction. The Interactions API abstracts this cleanly, keeping the worker code readable and maintainable.
+**Styling philosophy** — All components are styled directly with Tailwind utility classes and a small set of shared primitives (`AuthCard`, `PasswordToggle`) rather than a heavy design system, keeping the bundle lean for a project this size.
 
 ---
 
-## Contributing
+## Related Repositories
 
-Contributions are welcome. Please open an issue first to discuss what you'd like to change.
-
-```bash
-# Run linting
-npm run lint
-
-# Run type checking
-npx tsc --noEmit
-```
+- [edocai-backend](https://github.com/ymahrous/edocai-backend) — FastAPI + Celery + Google Gemini backend
 
 ---
 
 ## License
 
-[MIT LICENSE](./LICENSE)
-
----
-
-<div align="center">
-
-Built with Next.js · FastAPI · Celery · Google Gemini · Railway · Vercel
-
-**[Live Demo →](https://edocai.vercel.app)**
-
-</div>
+[MIT](./LICENSE)
