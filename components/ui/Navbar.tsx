@@ -15,8 +15,6 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Re-check auth on every route change AND on storage events
-  // (covers both navigation and same-tab logout)
   useEffect(() => {
     const syncAuth = () => {
       setIsLoggedIn(!!localStorage.getItem("token"));
@@ -26,7 +24,6 @@ export default function Navbar() {
     return () => window.removeEventListener("storage", syncAuth);
   }, [pathname]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
@@ -48,9 +45,11 @@ export default function Navbar() {
     }`;
 
   return (
-    <nav className={`fixed top-0 w-full z-50 border-b backdrop-blur-xl ${
-      isDark ? "bg-black/80 border-white/10" : "bg-white/80 border-gray-200"
-    }`}>
+    <nav
+      className={`fixed top-0 w-full z-50 border-b backdrop-blur-xl ${
+        isDark ? "bg-black/80 border-white/10" : "bg-white/80 border-gray-200"
+      }`}
+    >
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
 
         {/* Logo */}
@@ -63,7 +62,6 @@ export default function Navbar() {
             alt="edocAI"
             width={80}
             height={24}
-            className={"invert-0"}
             style={{ width: "auto", height: "24px" }}
           />
         </div>
@@ -90,6 +88,16 @@ export default function Navbar() {
             )}
           </button>
 
+          {/* Pricing (ALWAYS VISIBLE) */}
+          {pathname !== "/pricing" && (
+            <button
+              onClick={() => router.push("/pricing")}
+              className={navLinkClass("/pricing")}
+            >
+              Pricing
+            </button>
+          )}
+
           {/* Auth Links */}
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
@@ -98,11 +106,13 @@ export default function Navbar() {
                   Dashboard
                 </button>
               )}
+
               {pathname !== "/profile" && (
                 <button onClick={() => router.push("/profile")} className={navLinkClass("/profile")}>
                   Profile
                 </button>
               )}
+
               <button onClick={handleLogout} className={navLinkClass("")}>
                 Logout
               </button>
@@ -112,6 +122,7 @@ export default function Navbar() {
               <button onClick={() => router.push("/login")} className={navLinkClass("/login")}>
                 Login
               </button>
+
               <button
                 onClick={() => router.push("/signup")}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2 rounded-full transition-colors"
@@ -150,55 +161,52 @@ export default function Navbar() {
             className={`p-2 rounded-full transition-colors ${
               isDark ? "hover:bg-white/10 text-white" : "hover:bg-black/10 text-gray-900"
             }`}
-            aria-label="Toggle menu"
           >
-            {menuOpen ? (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
+            {menuOpen ? "✕" : "☰"}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu */}
       {menuOpen && (
-        <div className={`md:hidden border-t px-6 py-4 flex flex-col gap-4 ${
-          isDark ? "bg-black/90 border-white/10" : "bg-white/90 border-gray-200"
-        }`}>
+        <div
+          className={`md:hidden border-t px-6 py-4 flex flex-col gap-4 ${
+            isDark ? "bg-black/90 border-white/10" : "bg-white/90 border-gray-200"
+          }`}
+        >
+          {/* Pricing ALWAYS visible */}
+          {pathname !== "/pricing" && (
+            <button
+              onClick={() => router.push("/pricing")}
+              className={navLinkClass("/pricing")}
+            >
+              Pricing
+            </button>
+          )}
+
           {isLoggedIn ? (
             <>
-              <button
-                onClick={() => router.push("/app")}
-                className={navLinkClass("/app")}
-              >
+              <button onClick={() => router.push("/app")} className={navLinkClass("/app")}>
                 Dashboard
               </button>
-              <button
-                onClick={() => router.push("/profile")}
-                className={navLinkClass("/profile")}
-              >
+
+              <button onClick={() => router.push("/profile")} className={navLinkClass("/profile")}>
                 Profile
               </button>
+
               <button onClick={handleLogout} className={navLinkClass("")}>
                 Logout
               </button>
             </>
           ) : (
             <>
-              <button
-                onClick={() => router.push("/login")}
-                className={navLinkClass("/login")}
-              >
+              <button onClick={() => router.push("/login")} className={navLinkClass("/login")}>
                 Login
               </button>
+
               <button
                 onClick={() => router.push("/signup")}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2 rounded-full transition-colors text-left"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2 rounded-full text-left"
               >
                 Get Started
               </button>

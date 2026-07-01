@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/providers/ThemeContext";
-import { logout, decodeToken, isTokenExpired } from "@/lib/api";
+import { logout, decodeToken, isTokenExpired, getUsage } from "@/lib/api";
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
@@ -128,6 +128,7 @@ export default function ProfilePage() {
   const [accountEmail, setAccountEmail] = useState("");
   const [memberSince, setMemberSince] = useState("");
   const [sessionExpiry, setSessionExpiry] = useState("");
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
 
   useEffect(() => {
     if (isTokenExpired()) {
@@ -147,8 +148,6 @@ export default function ProfilePage() {
     // Format session expiry
     const iat = (payload as { sub: string; exp: number; iat?: number }).iat;
 
-    // iat = when the token was issued (session start)
-    // exp = when the token expires (session end)
     if (iat) {
     setMemberSince(new Date(iat * 1000).toLocaleDateString("en-US", {
         year: "numeric", month: "long", day: "numeric",
@@ -157,6 +156,19 @@ export default function ProfilePage() {
 
     const expDate = new Date(payload.exp * 1000);
     setSessionExpiry(expDate.toLocaleString());
+
+    // Fetch real-time plan from backend
+    const fetchPlan = async () => {
+      try {
+        const usage = await getUsage();
+        setCurrentPlan(usage.plan);
+      } catch {
+        // Fallback to JWT if API fails
+        if (payload.plan) setCurrentPlan(payload.plan);
+      }
+    };
+    fetchPlan();
+
   }, [router]);
 
   // ── Password change ──
@@ -287,6 +299,44 @@ export default function ProfilePage() {
                 disabled
                 isDark={isDark}
               />
+            )}
+          </div>
+        </SectionCard>
+
+        {/* Subscription & Plan - NEW */}
+        <SectionCard
+          title="Subscription & Plan"
+          description="Your current pricing tier and benefits."
+          isDark={isDark}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                currentPlan === "pro" 
+                  ? "bg-emerald-500/20" 
+                  : isDark ? "bg-white/10" : "bg-gray-100"
+              }`}>
+                <svg className={`w-5 h-5 ${currentPlan === "pro" ? "text-emerald-400" : isDark ? "text-gray-500" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                  {currentPlan === "pro" ? "edocAI Pro" : "Free Tier"}
+                </p>
+                <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                  {currentPlan === "pro" ? "Unlimited documents & integrations" : "10 documents / month"}
+                </p>
+              </div>
+            </div>
+
+            {currentPlan !== "pro" && (
+              <button
+                onClick={() => router.push("/pricing")}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                Upgrade
+              </button>
             )}
           </div>
         </SectionCard>

@@ -39,7 +39,8 @@ export default function Footer() {
             <ul className="space-y-3">
               <li><Link href="/app" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Dashboard</Link></li>
               <li><Link href="/#features" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Features</Link></li>
-              <li><Link href="/#api" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>API Docs</Link></li>
+              <li><Link href="/pricing" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Pricing</Link></li>
+              <li><Link href="/docs" className={`text-sm transition-colors ${isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-gray-900"}`}>Docs</Link></li>
             </ul>
           </div>
 

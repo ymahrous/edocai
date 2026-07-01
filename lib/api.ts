@@ -23,7 +23,15 @@ export interface Extraction {
   confidence_score: number;
 }
 
-export function decodeToken(): { sub: string; exp: number } | null {
+export type TokenPayload = {
+  sub: string;
+  exp: number;
+  plan?: string;
+  iat?: number;
+  [key: string]: unknown;
+};
+
+export function decodeToken(): TokenPayload | null {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   if (!token) return null;
   try {
@@ -143,5 +151,38 @@ export async function getDocuments(signal?: AbortSignal): Promise<Document[]> {
 export async function getExtraction(documentId: string): Promise<Extraction> {
   const res = await authFetch(`${API_URL}/extraction/${documentId}`);
   if (!res.ok) throw new Error("Extraction not ready");
+  return res.json();
+}
+
+export async function deleteDocument(documentId: string): Promise<void> {
+  const res = await authFetch(`${API_URL}/documents/${documentId}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok && res.status !== 204) {
+    throw new Error("Failed to delete document");
+  }
+}
+
+// --- BILLING FUNCTIONS ---
+export async function createCheckoutSession(): Promise<{ url: string }> {
+  const res = await authFetch(`${API_URL}/billing/create-checkout-session`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to create checkout session");
+  return res.json();
+}
+
+// Add these to lib/api.ts
+
+export interface UsageData {
+  plan: string;
+  documents_processed: number;
+  limit: number;
+}
+
+export async function getUsage(): Promise<UsageData> {
+  const res = await authFetch(`${API_URL}/billing/usage`);
+  if (!res.ok) throw new Error("Failed to fetch usage");
   return res.json();
 }

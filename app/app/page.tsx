@@ -5,8 +5,11 @@ import {
   uploadDocument,
   getDocuments,
   getExtraction,
+  deleteDocument,
+  getUsage,
   Document,
   Extraction,
+  UsageData,
   isTokenExpired,
 } from "@/lib/api";
 import { useRouter } from "next/navigation";
@@ -106,12 +109,14 @@ export default function DashboardPage() {
   // ── Documents ──
   const [documents, setDocuments] = useState<Document[]>([]);
   const [extractions, setExtractions] = useState<Record<string, Extraction>>({});
+  const [usageData, setUsageData] = useState<UsageData | null>(null);
   const fetchingIdsRef = useRef<Set<string>>(new Set());
 
   // ── Upload ──
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [dragActive, setDragActive] = useState(false);
 
   // ── Pagination ──
@@ -147,6 +152,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+
+    const fetchUsage = async () => {
+      try {
+        setUsageData(await getUsage());
+      } catch {
+        setUsageData(null);
+      }
+    };
+
+    fetchUsage();
 
     const schedule = () => {
       fetchDocs().then(() => {
@@ -257,20 +272,17 @@ export default function DashboardPage() {
   // ── Delete ──
   const handleDelete = async (id: string) => {
     setDeletingIds((prev) => new Set(prev).add(id));
+    setDeleteError("");
     try {
-      const token = localStorage.getItem("token");
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/documents/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setDocuments((prev) => prev.filter((d) => d.id !== id));
+      await deleteDocument(id);
+      await fetchDocs();
       setExtractions((prev) => {
         const next = { ...prev };
         delete next[id];
         return next;
       });
     } catch {
-      // Silently fail — document stays in the list
+      setDeleteError("Failed to delete document. Please try again.");
     } finally {
       setDeletingIds((prev) => {
         const next = new Set(prev);
@@ -290,6 +302,10 @@ export default function DashboardPage() {
   // ── Pagination ──
   const totalPages = Math.ceil(completedDocs.length / PAGE_SIZE);
   const paginatedDocs = completedDocs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const isFreePlan = usageData?.plan !== "pro";
+  const remainingProcessings = usageData
+    ? Math.max(usageData.limit - usageData.documents_processed, 0)
+    : 0;
 
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -309,6 +325,15 @@ export default function DashboardPage() {
           <p className={`text-sm mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
             Upload invoices to extract structured data via AI.
           </p>
+          {isFreePlan && usageData && (
+            <div className={`mt-4 inline-flex flex-wrap items-center gap-2 rounded-full border px-3 py-2 text-xs ${
+              isDark ? "border-white/10 bg-white/5 text-gray-300" : "border-gray-200 bg-white text-gray-700"
+            }`}>
+              <span>Documents processed this month: {usageData.documents_processed}</span>
+              <span className={isDark ? "text-gray-600" : "text-gray-300"}>•</span>
+              <span>Remaining processings: {remainingProcessings}</span>
+            </div>
+          )}
         </div>
 
         {/* Upload Zone */}
@@ -375,6 +400,25 @@ export default function DashboardPage() {
             <p className="text-sm text-red-500">{uploadError}</p>
             <button
               onClick={() => setUploadError("")}
+              className="ml-auto text-red-400 hover:text-red-300"
+              aria-label="Dismiss error"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Delete Error */}
+        {deleteError && (
+          <div className="mb-6 flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
+            <svg className="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <p className="text-sm text-red-500">{deleteError}</p>
+            <button
+              onClick={() => setDeleteError("")}
               className="ml-auto text-red-400 hover:text-red-300"
               aria-label="Dismiss error"
             >
