@@ -72,7 +72,6 @@ export default function PricingPage() {
 
   const handleUpgrade = async () => {
     if (!isLoggedIn) {
-      alert("You must be logged in to upgrade.");
       router.push("/login");
       return;
     }
